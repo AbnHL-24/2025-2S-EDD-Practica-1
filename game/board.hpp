@@ -2,44 +2,49 @@
 #include "../ds/linked_list.hpp"
 #include "square.hpp"
 
+// Estructura que representa una fila de celdas en el tablero
 struct Row {
-    LinkedList<Square *> cells;
+    LinkedList<Square *> cells; // Lista enlazada de punteros a cuadrados en esta fila
 };
 
+// Clase que representa el tablero de juego completo
 class Board {
-    // We model cells using linked lists; edges are shared by adjacent cells
-    LinkedList<Row *> rows; // rows of cells
-    // Keep explicit edge grids for quick access
-    Edge **H = nullptr; // horizontal edges [hRows x hCols] flattened
-    Edge **V = nullptr; // vertical edges [vRows x vCols] flattened
+    // Modelamos las celdas usando listas enlazadas; los bordes son compartidos por celdas adyacentes
+    LinkedList<Row *> rows; // Filas de celdas del tablero
 
-    int cellsR = 0, cellsC = 0; // number of squares
-    int pointsR = 0, pointsC = 0; // number of points grid
+    // Mantenemos cuadriculas de bordes explicitas para un acceso rápido
+    Edge **H = nullptr; // Bordes horizontales [hRows x hCols] aplanados en arreglo 1D
+    Edge **V = nullptr; // Bordes verticales [vRows x vCols] aplanados en arreglo 1D
+
+    int cellsR = 0, cellsC = 0; // Número de cuadrados (filas y columnas de celdas)
+    int pointsR = 0, pointsC = 0; // Número de puntos en la cuadrícula (vértices)
 
 public:
-    ~Board();
+    ~Board(); // Destructor que libera memoria del tablero
 
-    void initializeFromPoints(int pointsW, int pointsH); // Pw, Ph
-    int cellsRows() const { return cellsR; }
-    int cellsCols() const { return cellsC; }
-    int pointsRows() const { return pointsR; }
-    int pointsCols() const { return pointsC; }
+    // Inicializa el tablero basado en el número de puntos (vértices) especificados
+    void initializeFromPoints(int pointsW, int pointsH); // Pw (ancho), Ph (alto)
 
-    // Edge accessors: coordinates are in points-grid for H and V
-    Edge *getEdgeH(int r, int c); // H size: pointsR x (pointsC-1)
-    Edge *getEdgeV(int r, int c); // V size: (pointsR-1) x pointsC
+    // Métodos de acceso a las dimensiones del tablero
+    int cellsRows() const { return cellsR; } // Retorna número de filas de celdas
+    int cellsCols() const { return cellsC; } // Retorna número de columnas de celdas
+    int pointsRows() const { return pointsR; } // Retorna número de filas de puntos
+    int pointsCols() const { return pointsC; } // Retorna número de columnas de puntos
 
-    // Given an edge, collect adjacent squares that could be closed by it
+    // Accesores de bordes: las coordenadas están en la cuadrícula de puntos para H y V
+    Edge *getEdgeH(int r, int c); // Bordes H tamaño: pointsR x (pointsC-1)
+    Edge *getEdgeV(int r, int c); // Bordes V tamaño: (pointsR-1) x pointsC
+
+    // Dado un borde, recolecta los cuadrados adyacentes que podrían cerrarse con él
     void collectSquaresAdjacentToEdge(Edge *e, LinkedList<Square *> &out);
 
-    // Rendering
-    void render(bool clairvoyant) const;
+    // Renderizado del tablero en consola
+    void render(bool clairvoyant) const; // clairvoyant: muestra power-ups ocultos
 
-    // Power-up distribution (simple random placement or deterministic)
-    void distributePowerUps(int percent /*0..100*/);
+    // Distribución de power-ups en el tablero (colocación aleatoria simple o determinística)
+    void distributePowerUps(int percent /*0..100*/); // percent: porcentaje de cuadrados con power-ups
 
-    // Helpers for evaluation
-    Row *getRow(int r) const;
-
-    Square *getSquare(int r, int c) const;
+    // Métodos auxiliares para evaluación y acceso a elementos
+    Row *getRow(int r) const; // Obtiene puntero a la fila especificada
+    Square *getSquare(int r, int c) const; // Obtiene puntero al cuadrado en coordenadas específicas
 };

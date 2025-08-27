@@ -1,86 +1,92 @@
 #include "board.hpp"
 #include <iostream>
 
-static int idxH(int r, int c, int rows, int cols) { return r * cols + c; }
-static int idxV(int r, int c, int rows, int cols) { return r * cols + c; }
+// Funciones auxiliares para calcular índices en arreglos 1D que representan grillas 2D
+static int idxH(int r, int c, int rows, int cols) { return r * cols + c; } // Índice para bordes horizontales
+static int idxV(int r, int c, int rows, int cols) { return r * cols + c; } // Índice para bordes verticales
 
+// Destructor del tablero: libera toda la memoria asignada dinámicamente
 Board::~Board() {
-    // Free Squares and Rows
+    // Libera cuadrados y filas
     for (int r = 0; r < cellsR; ++r) {
         Row *row = getRow(r);
-        // delete Square*
+        // Elimina cada cuadrado en la fila
         for (int c = 0; c < cellsC; ++c) {
             Square *s = row->cells.getAt(c);
             delete s;
         }
-        delete row;
+        delete row; // Elimina la fila
     }
-    // Free edges
+    // Libera bordes horizontales
     if (H) {
         int hRows = pointsR;
         int hCols = pointsC - 1;
-        for (int i = 0; i < hRows * hCols; ++i) delete H[i];
-        delete[] H;
+        for (int i = 0; i < hRows * hCols; ++i) delete H[i]; // Elimina cada borde
+        delete[] H; // Elimina el arreglo de punteros
     }
+    // Libera bordes verticales
     if (V) {
         int vRows = pointsR - 1;
         int vCols = pointsC;
-        for (int i = 0; i < vRows * vCols; ++i) delete V[i];
-        delete[] V;
+        for (int i = 0; i < vRows * vCols; ++i) delete V[i]; // Elimina cada borde
+        delete[] V; // Elimina el arreglo de punteros
     }
 }
 
+// Inicializa el tablero basándose en el número de puntos (vértices) especificados
 void Board::initializeFromPoints(int pointsW, int pointsH) {
-    // points grid must be at least 3x3
+    // La cuadrícula de puntos debe ser al menos 3x3
     if (pointsW < 3) pointsW = 3;
     if (pointsH < 3) pointsH = 3;
-    pointsC = pointsW;
-    pointsR = pointsH;
+    pointsC = pointsW; // Columnas de puntos
+    pointsR = pointsH; // Filas de puntos
 
-    cellsC = pointsC - 1;
-    cellsR = pointsR - 1;
+    cellsC = pointsC - 1; // Columnas de celdas (una menos que puntos)
+    cellsR = pointsR - 1; // Filas de celdas (una menos que puntos)
 
-    // Allocate edges grids
-    int hRows = pointsR;
-    int hCols = pointsC - 1;
+    // Asigna memoria para las cuadrículas de bordes
+    int hRows = pointsR; // Bordes horizontales: mismas filas que puntos
+    int hCols = pointsC - 1; // Bordes horizontales: una columna menos que puntos
     H = new Edge *[hRows * hCols];
-    int vRows = pointsR - 1;
-    int vCols = pointsC;
+    int vRows = pointsR - 1; // Bordes verticales: una fila menos que puntos
+    int vCols = pointsC; // Bordes verticales: mismas columnas que puntos
     V = new Edge *[vRows * vCols];
 
-    int eid = 0;
+    // Crea y configura bordes horizontales
+    int eid = 0; // ID único para cada borde
     for (int r = 0; r < hRows; ++r) {
         for (int c = 0; c < hCols; ++c) {
             Edge *e = new Edge();
             e->id = eid++;
-            e->o = Orient::H;
+            e->o = Orient::H; // Orientación horizontal
             e->r = r;
             e->c = c;
             H[idxH(r, c, hRows, hCols)] = e;
         }
     }
+    // Crea y configura bordes verticales
     for (int r = 0; r < vRows; ++r) {
         for (int c = 0; c < vCols; ++c) {
             Edge *e = new Edge();
             e->id = eid++;
-            e->o = Orient::V;
+            e->o = Orient::V; // Orientación vertical
             e->r = r;
             e->c = c;
             V[idxV(r, c, vRows, vCols)] = e;
         }
     }
 
-    // Build cells as linked lists, wiring edges
+    // Construye celdas como listas enlazadas, conectando bordes
     for (int r = 0; r < cellsR; ++r) {
         Row *row = new Row();
         for (int c = 0; c < cellsC; ++c) {
             Square *s = new Square();
             s->r = r;
             s->c = c;
-            // Map edges: careful with coordinates
-            // For square at (r,c):
-            // top H at (r, c), bottom H at (r+1, c)
-            // left V at (r, c), right V at (r, c+1)
+            // Mapea bordes: cuidado con las coordenadas
+            // Para cuadrado en (r,c):
+            // borde superior H en (r, c), borde inferior H en (r+1, c)
+            // borde izquierdo V en (r, c), borde derecho V en (r, c+1)
             s->top = H[idxH(r, c, pointsR, pointsC - 1)];
             s->bottom = H[idxH(r + 1, c, pointsR, pointsC - 1)];
             s->left = V[idxV(r, c, pointsR - 1, pointsC)];
@@ -92,133 +98,146 @@ void Board::initializeFromPoints(int pointsW, int pointsH) {
     }
 }
 
+// Obtiene un borde horizontal en las coordenadas especificadas
 Edge *Board::getEdgeH(int r, int c) {
     int hRows = pointsR, hCols = pointsC - 1;
-    if (r < 0 || r >= hRows || c < 0 || c >= hCols) return nullptr;
+    if (r < 0 || r >= hRows || c < 0 || c >= hCols) return nullptr; // Valida límites
     return H[idxH(r, c, hRows, hCols)];
 }
 
+// Obtiene un borde vertical en las coordenadas especificadas
 Edge *Board::getEdgeV(int r, int c) {
     int vRows = pointsR - 1, vCols = pointsC;
-    if (r < 0 || r >= vRows || c < 0 || c >= vCols) return nullptr;
+    if (r < 0 || r >= vRows || c < 0 || c >= vCols) return nullptr; // Valida límites
     return V[idxV(r, c, vRows, vCols)];
 }
 
+// Obtiene un puntero a la fila especificada
 Row *Board::getRow(int r) const {
-    // rows is LinkedList<Row*>, getAt is O(n)
+    // rows es LinkedList<Row*>, getAt es O(n)
     return rows.getAt(r);
 }
 
+// Obtiene un puntero al cuadrado en las coordenadas especificadas
 Square *Board::getSquare(int r, int c) const {
     return getRow(r)->cells.getAt(c);
 }
 
+// Recolecta los cuadrados adyacentes a un borde dado que podrían cerrarse con él
 void Board::collectSquaresAdjacentToEdge(Edge *e, LinkedList<Square *> &out) {
     if (!e) return;
     if (e->o == Orient::H) {
-        int sr = e->r - 1;
+        // Para bordes horizontales
+        int sr = e->r - 1; // Cuadrado arriba del borde
         int sc = e->c;
         if (sr >= 0 && sr < cellsR && sc >= 0 && sc < cellsC) {
             out.push_back(getSquare(sr, sc));
         }
-        sr = e->r;
+        sr = e->r; // Cuadrado abajo del borde
         if (sr >= 0 && sr < cellsR && sc >= 0 && sc < cellsC) {
             out.push_back(getSquare(sr, sc));
         }
     } else {
+        // Para bordes verticales
         int sr = e->r;
-        int sc = e->c - 1;
+        int sc = e->c - 1; // Cuadrado a la izquierda del borde
         if (sr >= 0 && sr < cellsR && sc >= 0 && sc < cellsC) {
             out.push_back(getSquare(sr, sc));
         }
-        sc = e->c;
+        sc = e->c; // Cuadrado a la derecha del borde
         if (sr >= 0 && sr < cellsR && sc >= 0 && sc < cellsC) {
             out.push_back(getSquare(sr, sc));
         }
     }
 }
 
+// Distribuye power-ups aleatoriamente en el tablero según el porcentaje especificado
 void Board::distributePowerUps(int percent) {
     if (percent <= 0) return;
     for (int r = 0; r < cellsR; ++r) {
         for (int c = 0; c < cellsC; ++c) {
             Square *s = getSquare(r, c);
-            // Simple deterministic pseudo "random" to avoid RNG for now
+            // Pseudo-aleatorio determinístico simple para evitar RNG por ahora
             int hash = (r * 31 + c * 17 + 7) % 100;
             if (hash < percent) {
-                // Alternate between some powers; puedes cambiar esta lógica
+                // Alterna entre algunos power-ups; puedes cambiar esta lógica
                 int pick = (r + c) % 6;
                 s->hasPower = true;
                 switch (pick) {
                     case 0: s->power = {PowerType::DL};
-                        break;
+                        break; // Double Laser
                     case 1: s->power = {PowerType::TS};
-                        break;
+                        break; // Triple Shot
                     case 2: s->power = {PowerType::BL};
-                        break;
+                        break; // Big Laser
                     case 3: s->power = {PowerType::LS};
-                        break;
+                        break; // Laser Shield
                     case 4: s->power = {PowerType::ES};
-                        break;
+                        break; // Energy Shield
                     default: s->power = {PowerType::UF};
-                        break;
+                        break; // Ultra Fire
                 }
             }
         }
     }
 }
 
+// Renderiza el tablero en la consola con representación ASCII
 void Board::render(bool clairvoyant) const {
-    // Render uses fixed cell width=3
+    // El renderizado usa ancho fijo de celda = 3
     const int w = 3;
-    (void) w;
-    // For each points row
+    (void) w; // Suprime warning de variable no usada
+
+    // Para cada fila de puntos
     for (int pr = 0; pr < pointsR; ++pr) {
-        // Draw horizontal edges row: points and H edges
-        // Points row has pointsC points and (pointsC-1) H edges
+        // Dibuja fila de bordes horizontales: puntos y bordes H
+        // Fila de puntos tiene pointsC puntos y (pointsC-1) bordes H
         for (int pc = 0; pc < pointsC; ++pc) {
-            std::cout << "*";
+            std::cout << "*"; // Dibuja punto/vértice
             if (pc < pointsC - 1) {
                 Edge *e = H[idxH(pr, pc, pointsR, pointsC - 1)];
                 if (e->placed) {
+                    // Si el borde está colocado
                     if (clairvoyant) {
-                        // show codes inline up to width
+                        // Muestra códigos inline hasta el ancho disponible
                         std::cout << "_-_";
                     } else {
-                        std::cout << "---";
+                        std::cout << "---"; // Línea sólida
                     }
                 } else {
-                    std::cout << "   ";
+                    std::cout << "   "; // Espacio vacío
                 }
             }
         }
         std::cout << "\n";
 
-        // If not last points row, print verticals and cell interiors
+        // Si no es la última fila de puntos, imprime verticales e interiores de celdas
         if (pr < pointsR - 1) {
             for (int pc = 0; pc < pointsC; ++pc) {
-                // Vertical edge at (pr, pc)
+                // Borde vertical en (pr, pc)
                 Edge *v = V[idxV(pr, pc, pointsR - 1, pointsC)];
-                if (v->placed) std::cout << "l";
-                else std::cout << " ";
+                if (v->placed) std::cout << "l"; // Línea vertical
+                else std::cout << " "; // Espacio vacío
 
-                // Cell interior between (pc) and (pc+1) if exists
+                // Interior de celda entre (pc) y (pc+1) si existe
                 if (pc < pointsC - 1) {
                     Square *s = getSquare(pr, pc);
                     char mid = ' ';
                     if (s->closed) {
+                        // Si el cuadrado está cerrado
                         if (s->ownerId >= 0) {
-                            mid = '#'; // placeholder visual
+                            mid = '#'; // Marcador visual del propietario
                         }
                     } else if (s->hasPower) {
+                        // Si tiene power-up
                         const char *code = PowerCode(s->power.type);
-                        // fit 3 width: center 2-letter code
+                        // Ajusta a ancho 3: centra código de 2 letras
                         std::cout << code;
-                        // fill remaining width 1
+                        // Rellena ancho restante 1
                         std::cout << " ";
                         continue;
                     }
-                    // default fill
+                    // Relleno por defecto
                     std::cout << " " << mid << " ";
                 }
             }
@@ -226,17 +245,19 @@ void Board::render(bool clairvoyant) const {
         }
     }
 
+    // Modo clarividente: segunda pasada con anotaciones de efectos bajo la cuadrícula
     if (clairvoyant) {
-        // Second pass with effects annotations under the grid (simple list)
         std::cout << "\n[Clarividente] Efectos en lineas:\n";
-        // List some sample effects found
+        // Lista algunos efectos de muestra encontrados
         int hRows = pointsR, hCols = pointsC - 1;
+        // Revisa bordes horizontales
         for (int r = 0; r < hRows; ++r) {
             for (int c = 0; c < hCols; ++c) {
                 Edge *e = H[idxH(r, c, hRows, hCols)];
                 bool any = false;
                 for (auto it = e->effects.iter(); it.has(); it.next()) {
                     if (it.val().active) {
+                        // Solo efectos activos
                         if (!any) {
                             std::cout << "H(" << r << "," << c << "):";
                             any = true;
@@ -248,12 +269,14 @@ void Board::render(bool clairvoyant) const {
             }
         }
         int vRows = pointsR - 1, vCols = pointsC;
+        // Revisa bordes verticales
         for (int r = 0; r < vRows; ++r) {
             for (int c = 0; c < vCols; ++c) {
                 Edge *e = V[idxV(r, c, vRows, vCols)];
                 bool any = false;
                 for (auto it = e->effects.iter(); it.has(); it.next()) {
                     if (it.val().active) {
+                        // Solo efectos activos
                         if (!any) {
                             std::cout << "V(" << r << "," << c << "):";
                             any = true;
