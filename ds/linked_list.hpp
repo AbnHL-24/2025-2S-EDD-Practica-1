@@ -17,6 +17,13 @@ class LinkedList {
 
 public:
     ~LinkedList() { clear(); }
+
+    LinkedList() = default;
+
+    LinkedList(const LinkedList &) = delete;
+
+    LinkedList &operator=(const LinkedList &) = delete;
+
     int size() const { return n; }
     bool empty() const { return n == 0; }
 
@@ -29,10 +36,25 @@ public:
         ++n;
     }
 
+    void push_front(const T &v) {
+        Node *nn = new Node(v);
+        nn->next = head;
+        head = nn;
+        if (!tail) tail = nn;
+        ++n;
+    }
+
     T &getAt(int idx) {
         if (idx < 0 || idx >= n) throw std::out_of_range("idx");
         Node *cur = head;
-        for (int i = 0; i < idx; i++) cur = cur->next;
+        for (int i = 0; i < idx; ++i) cur = cur->next;
+        return cur->data;
+    }
+
+    const T &getAt(int idx) const {
+        if (idx < 0 || idx >= n) throw std::out_of_range("idx");
+        Node *cur = head;
+        for (int i = 0; i < idx; ++i) cur = cur->next;
         return cur->data;
     }
 
@@ -40,7 +62,7 @@ public:
         if (idx < 0 || idx >= n) throw std::out_of_range("idx");
         Node *cur = head;
         Node *prev = nullptr;
-        for (int i = 0; i < idx; i++) {
+        for (int i = 0; i < idx; ++i) {
             prev = cur;
             cur = cur->next;
         }
@@ -68,5 +90,5 @@ public:
         void next() { if (p) p = p->next; }
     };
 
-    It iter() { return It{head}; }
+    It iter() const { return It{head}; }
 };
