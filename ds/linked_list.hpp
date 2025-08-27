@@ -4,91 +4,102 @@
 template<typename T>
 class LinkedList {
     struct Node {
-        T data;
-        Node *next;
+        T data; // Dato almacenado en el nodo
+        Node *next; // Puntero al siguiente nodo
 
+        // Constructor del nodo: inicializa el dato con el valor recibido y el puntero next en nullptr
         Node(const T &d) : data(d), next(nullptr) {
         }
     };
 
-    Node *head = nullptr;
-    Node *tail = nullptr;
-    int n = 0;
+    Node *head = nullptr; // Puntero al primer nodo
+    Node *tail = nullptr; // Puntero al último nodo
+    int n = 0; // Contador de elementos
 
 public:
-    ~LinkedList() { clear(); }
+    ~LinkedList() { clear(); } // Destructor que libera memoria
 
-    LinkedList() = default;
+    LinkedList() = default; // Constructor por defecto
 
-    LinkedList(const LinkedList &) = delete;
+    LinkedList(const LinkedList &) = delete; // Prohíbe copia
+    LinkedList &operator=(const LinkedList &) = delete; // Prohíbe asignación
 
-    LinkedList &operator=(const LinkedList &) = delete;
+    int size() const { return n; } // Retorna número de elementos
+    bool empty() const { return n == 0; } // Verifica si está vacía
 
-    int size() const { return n; }
-    bool empty() const { return n == 0; }
-
+    // Inserta un nuevo elemento al final de la lista enlazada
     void push_back(const T &v) {
-        Node *nn = new Node(v);
-        if (!head) { head = tail = nn; } else {
-            tail->next = nn;
-            tail = nn;
+        Node *nn = new Node(v); // Crea nuevo nodo
+        if (!head) { head = tail = nn; } // Primera inserción
+        else {
+            tail->next = nn; // Conecta al final
+            tail = nn; // Actualiza tail
         }
-        ++n;
+        ++n; // Incrementa contador
     }
 
+    // Inserta un nuevo elemento al inicio de la lista enlazada
     void push_front(const T &v) {
-        Node *nn = new Node(v);
-        nn->next = head;
-        head = nn;
-        if (!tail) tail = nn;
-        ++n;
+        Node *nn = new Node(v); // Crea nuevo nodo
+        nn->next = head; // Conecta al inicio
+        head = nn; // Actualiza head
+        if (!tail) tail = nn; // Si era vacía, actualiza tail
+        ++n; // Incrementa contador
     }
 
+    // Obtiene una referencia al elemento en la posición especificada (versión no constante)
     T &getAt(int idx) {
-        if (idx < 0 || idx >= n) throw std::out_of_range("idx");
+        if (idx < 0 || idx >= n) throw std::out_of_range("idx"); // Valida índice
         Node *cur = head;
-        for (int i = 0; i < idx; ++i) cur = cur->next;
-        return cur->data;
+        for (int i = 0; i < idx; ++i) cur = cur->next; // Navega hasta posición
+        return cur->data; // Retorna referencia
     }
 
+    // Obtiene una referencia constante al elemento en la posición especificada
     const T &getAt(int idx) const {
-        if (idx < 0 || idx >= n) throw std::out_of_range("idx");
+        if (idx < 0 || idx >= n) throw std::out_of_range("idx"); // Valida índice
         Node *cur = head;
-        for (int i = 0; i < idx; ++i) cur = cur->next;
-        return cur->data;
+        for (int i = 0; i < idx; ++i) cur = cur->next; // Navega hasta posición
+        return cur->data; // Retorna referencia constante
     }
 
+    // Elimina el elemento en la posición especificada de la lista
     void removeAt(int idx) {
-        if (idx < 0 || idx >= n) throw std::out_of_range("idx");
+        if (idx < 0 || idx >= n) throw std::out_of_range("idx"); // Valida índice
         Node *cur = head;
         Node *prev = nullptr;
         for (int i = 0; i < idx; ++i) {
+            // Busca nodo a eliminar
             prev = cur;
             cur = cur->next;
         }
-        if (prev) prev->next = cur->next;
-        else head = cur->next;
-        if (cur == tail) tail = prev;
-        delete cur;
-        --n;
+        if (prev) prev->next = cur->next; // Desconecta nodo
+        else head = cur->next; // Si es el primero
+        if (cur == tail) tail = prev; // Si es el último
+        delete cur; // Libera memoria
+        --n; // Decrementa contador
     }
 
+    // Elimina todos los elementos de la lista y libera la memoria
     void clear() {
         while (head) {
+            // Mientras haya nodos
             Node *t = head;
-            head = head->next;
-            delete t;
+            head = head->next; // Avanza head
+            delete t; // Elimina nodo anterior
         }
-        tail = nullptr;
-        n = 0;
+        tail = nullptr; // Resetea tail
+        n = 0; // Resetea contador
     }
 
+    // Iterador simple para recorrer la lista enlazada
     struct It {
-        Node *p;
-        bool has() const { return p != nullptr; }
-        T &val() const { return p->data; }
-        void next() { if (p) p = p->next; }
+        Node *p; // Puntero al nodo actual
+        bool has() const { return p != nullptr; } // Verifica si hay elemento
+        T &val() const { return p->data; } // Obtiene valor actual
+        void next() { if (p) p = p->next; } // Avanza al siguiente
     };
 
+    // Retorna un iterador que apunta al primer elemento de la lista
     It iter() const { return It{head}; }
 };
